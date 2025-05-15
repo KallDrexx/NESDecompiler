@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NESDecompiler.Core", "NESDecompiler.Core\NESDecompiler.Core.csproj", "{BA91C551-5979-4498-A1C4-BEF79910D7F7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NESDecompiler.CLI", "NESDecompiler.CLI\NESDecompiler.CLI.csproj", "{38B4A069-4124-4206-BB38-6946ED9BF120}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NESDecompiler.GUI", "NESDecompiler.GUI\NESDecompiler.GUI.csproj", "{DE7EAAE5-189D-435E-8834-54FAE4DA8977}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BA91C551-5979-4498-A1C4-BEF79910D7F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA91C551-5979-4498-A1C4-BEF79910D7F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA91C551-5979-4498-A1C4-BEF79910D7F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA91C551-5979-4498-A1C4-BEF79910D7F7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38B4A069-4124-4206-BB38-6946ED9BF120}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38B4A069-4124-4206-BB38-6946ED9BF120}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38B4A069-4124-4206-BB38-6946ED9BF120}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38B4A069-4124-4206-BB38-6946ED9BF120}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DE7EAAE5-189D-435E-8834-54FAE4DA8977}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE7EAAE5-189D-435E-8834-54FAE4DA8977}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE7EAAE5-189D-435E-8834-54FAE4DA8977}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE7EAAE5-189D-435E-8834-54FAE4DA8977}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {51005478-A548-469F-AEA4-CBB7818DFE04}
+	EndGlobalSection
+EndGlobal

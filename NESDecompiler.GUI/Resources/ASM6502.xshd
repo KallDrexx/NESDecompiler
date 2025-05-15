@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<SyntaxDefinition name="ASM6502" extensions=".asm" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+    <Color name="Comment" foreground="#008000" />
+    <Color name="String" foreground="#A31515" />
+    <Color name="Directive" foreground="#00FCF8" fontWeight="bold" />
+    <Color name="Instruction" foreground="#009BFC" />
+    <Color name="Register" foreground="#800080" />
+    <Color name="Label" foreground="#2B91AF" />
+    <Color name="Number" foreground="#FF8000" />
+    <Color name="Address" foreground="#FF0000" />
+
+    <RuleSet>
+        <!-- Comments -->
+        <Span color="Comment" begin=";" />
+        <Span color="Comment" begin="//" />
+        <Span color="Comment" multiline="true" begin="/\*" end="\*/" />
+
+        <!-- Strings -->
+        <Span color="String" begin="&quot;" end="&quot;" />
+        <Span color="String" begin="'" end="'" />
+
+        <!-- Directives -->
+        <Rule color="Directive">
+            \.(org|byte|word|db|dw|data|text|ascii|asciiz|define|include|macro|endm|segment|end)
+        </Rule>
+
+        <!-- Instructions -->
+        <Rule color="Instruction">
+            \b(adc|and|asl|bcc|bcs|beq|bit|bmi|bne|bpl|brk|bvc|bvs|clc|cld|cli|clv|cmp|cpx|cpy|dec|dex|dey|eor|inc|inx|iny|jmp|jsr|lda|ldx|ldy|lsr|nop|ora|pha|php|pla|plp|rol|ror|rti|rts|sbc|sec|sed|sei|sta|stx|sty|tax|tay|tsx|txa|txs|tya)\b
+        </Rule>
+
+        <!-- Registers -->
+        <Rule color="Register">
+            \b(a|x|y|sp)\b
+        </Rule>
+
+        <!-- Labels -->
+        <Rule color="Label">
+            ^[a-zA-Z_][a-zA-Z0-9_]*:
+        </Rule>
+
+        <!-- Numbers -->
+        <Rule color="Number">
+            \b([$%]?[0-9A-Fa-f]+)\b
+        </Rule>
+
+        <!-- Addresses -->
+        <Rule color="Address">
+            \$[0-9A-Fa-f]+
+        </Rule>
+    </RuleSet>
+</SyntaxDefinition>
