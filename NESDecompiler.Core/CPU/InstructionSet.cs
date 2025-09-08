@@ -113,17 +113,17 @@ namespace NESDecompiler.Core.CPU
             {
                 AddressingMode.Implied => "",
                 AddressingMode.Accumulator => "A",
-                AddressingMode.Immediate => "#$%02X",
-                AddressingMode.ZeroPage => "$%02X",
-                AddressingMode.ZeroPageX => "$%02X,X",
-                AddressingMode.ZeroPageY => "$%02X,Y",
-                AddressingMode.Relative => "$%02X",  // Will be processed specially for branches
-                AddressingMode.Absolute => "$%04X",
-                AddressingMode.AbsoluteX => "$%04X,X",
-                AddressingMode.AbsoluteY => "$%04X,Y",
-                AddressingMode.Indirect => "($%04X)",
-                AddressingMode.IndexedIndirect => "($%02X,X)",
-                AddressingMode.IndirectIndexed => "($%02X),Y",
+                AddressingMode.Immediate => "#{0:X2}",
+                AddressingMode.ZeroPage => "${0:X2}",
+                AddressingMode.ZeroPageX => "${0:X2},X",
+                AddressingMode.ZeroPageY => "${0:X2},Y",
+                AddressingMode.Relative => "${0:X2}",  // Will be processed specially for branches
+                AddressingMode.Absolute => "${0:X4}",
+                AddressingMode.AbsoluteX => "${0:X4},X",
+                AddressingMode.AbsoluteY => "${0:X4},Y",
+                AddressingMode.Indirect => "(${0:X4})",
+                AddressingMode.IndexedIndirect => "(${0:X2},X)",
+                AddressingMode.IndirectIndexed => "(${0:X2}),Y",
                 _ => "???"
             };
         }
