@@ -74,9 +74,19 @@ namespace NESDecompiler.Core.ROM
         public ushort ResetVector { get; set; }
 
         /// <summary>
+        /// The NMI handler address
+        /// </summary>
+        public ushort NmiVector { get; set; }
+
+        /// <summary>
+        /// The IRQ handler address
+        /// </summary>
+        public ushort IrqVector { get; set; }
+
+        /// <summary>
         /// The raw ROM data for reference
         /// </summary>
-        public byte[] RawData { get; set; }
+        public byte[]? RawData { get; set; }
 
         /// <summary>
         /// List of identified entry points (including reset vector and NMI)

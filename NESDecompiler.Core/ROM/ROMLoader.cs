@@ -21,13 +21,13 @@ namespace NESDecompiler.Core.ROM
         private const int FLAGS_10_OFFSET = 10;
 
         // ROM data
-        private byte[] romData;
-        private ROMInfo romInfo;
+        private byte[]? romData;
+        private ROMInfo? romInfo;
 
         /// <summary>
         /// Information about the loaded ROM
         /// </summary>
-        public ROMInfo ROMInfo => romInfo;
+        public ROMInfo? ROMInfo => romInfo;
 
         /// <summary>
         /// Loads a NES ROM file from disk
@@ -75,7 +75,7 @@ namespace NESDecompiler.Core.ROM
         private ROMInfo ParseROMHeader()
         {
             // Verify iNES header signature "NES" followed by MS-DOS EOF
-            if (romData.Length < HEADER_SIZE ||
+            if (romData!.Length < HEADER_SIZE ||
                 romData[0] != 0x4E || romData[1] != 0x45 || romData[2] != 0x53 || romData[3] != 0x1A)
             {
                 throw new InvalidROMFormatException("Invalid iNES ROM header");
@@ -107,15 +107,38 @@ namespace NESDecompiler.Core.ROM
 
             romInfo.CHRROMOffset = romInfo.PRGROMOffset + romInfo.PRGROMSize;
 
-            // Identify entry points (reset vector)
+            var end = romInfo.PRGROMOffset + romInfo.PRGROMSize;
+            var nmiOffset = end - 6;
+            var resetOffset = end - 4;
+            var irqOffset = end - 2;
+
+            ushort GetVectorAddress(int offset)
+            {
+                if (offset >= 0 && offset < romData.Length - 1)
+                {
+                    return (ushort)(romData[offset] | (romData[offset + 1] << 8));
+                }
+
+                return 0;
+            }
+
+            // Identify entry points (reset vector), NMI handler, and irq handler
             if (romInfo.PRGROMSize > 0)
             {
                 // In 6502, reset vector is at 0xFFFC-0xFFFD
                 // For NES, this is mapped to the end of the first PRG ROM bank
-                int resetVectorOffset = romInfo.PRGROMOffset + romInfo.PRGROMSize - 4;
-                if (resetVectorOffset >= 0 && resetVectorOffset < romData.Length - 1)
+                romInfo.ResetVector = GetVectorAddress(resetOffset);
+                romInfo.NmiVector = GetVectorAddress(nmiOffset);
+                romInfo.IrqVector = GetVectorAddress(irqOffset);
+
+                if (romInfo.NmiVector > 0)
                 {
-                    romInfo.ResetVector = (ushort)(romData[resetVectorOffset] | (romData[resetVectorOffset + 1] << 8));
+                    romInfo.EntryPoints.Add(romInfo.NmiVector);
+                }
+
+                if (romInfo.IrqVector > 0)
+                {
+                    romInfo.EntryPoints.Add(romInfo.IrqVector);
                 }
             }
 
