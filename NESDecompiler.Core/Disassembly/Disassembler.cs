@@ -185,6 +185,19 @@ namespace NESDecompiler.Core.Disassembly
             {
                 entryPoints.Add(romInfo.ResetVector);
             }
+
+            foreach (var entryPoint in romInfo.EntryPoints)
+            {
+                entryPoints.Add(entryPoint);
+            }
+        }
+
+        public void AddEntyPoint(ushort address)
+        {
+            if (address >= 0x8000)
+            {
+                entryPoints.Add(address);
+            }
         }
 
         /// <summary>

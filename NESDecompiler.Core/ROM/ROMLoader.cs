@@ -107,15 +107,38 @@ namespace NESDecompiler.Core.ROM
 
             romInfo.CHRROMOffset = romInfo.PRGROMOffset + romInfo.PRGROMSize;
 
-            // Identify entry points (reset vector)
+            var end = romInfo.PRGROMOffset + romInfo.PRGROMSize;
+            var nmiOffset = end - 6;
+            var resetOffset = end - 4;
+            var irqOffset = end - 2;
+
+            ushort GetVectorAddress(int offset)
+            {
+                if (offset >= 0 && offset < romData.Length - 1)
+                {
+                    return (ushort)(romData[offset] | (romData[offset + 1] << 8));
+                }
+
+                return 0;
+            }
+
+            // Identify entry points (reset vector), NMI handler, and irq handler
             if (romInfo.PRGROMSize > 0)
             {
                 // In 6502, reset vector is at 0xFFFC-0xFFFD
                 // For NES, this is mapped to the end of the first PRG ROM bank
-                int resetVectorOffset = romInfo.PRGROMOffset + romInfo.PRGROMSize - 4;
-                if (resetVectorOffset >= 0 && resetVectorOffset < romData.Length - 1)
+                romInfo.ResetVector = GetVectorAddress(resetOffset);
+                romInfo.NmiVector = GetVectorAddress(nmiOffset);
+                romInfo.IrqVector = GetVectorAddress(irqOffset);
+
+                if (romInfo.NmiVector > 0)
                 {
-                    romInfo.ResetVector = (ushort)(romData[resetVectorOffset] | (romData[resetVectorOffset + 1] << 8));
+                    romInfo.EntryPoints.Add(romInfo.NmiVector);
+                }
+
+                if (romInfo.IrqVector > 0)
+                {
+                    romInfo.EntryPoints.Add(romInfo.IrqVector);
                 }
             }
 
