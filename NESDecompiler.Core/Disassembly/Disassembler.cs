@@ -209,6 +209,7 @@ namespace NESDecompiler.Core.Disassembly
             TraceExecution();
             IdentifyFunctions();
             GenerateLabels();
+            EnsureReferencedAddressesAreDisassembled();
         }
 
         /// <summary>
@@ -225,20 +226,23 @@ namespace NESDecompiler.Core.Disassembly
         /// <summary>
         /// Performs a linear disassembly of the code data
         /// </summary>
-        private void LinearDisassembly()
+        private void LinearDisassembly(int offset = 0)
         {
             try
             {
-                int offset = 0;
-
                 ushort baseAddress = 0x8000;
 
                 while (offset < codeData.Length)
                 {
                     ushort cpuAddress = (ushort)(baseAddress + offset);
+                    if (addressToInstruction.ContainsKey(cpuAddress))
+                    {
+                        // We have already disassembled this instruction and progressed from here,
+                        // so we can stop.
+                        break;
+                    }
 
                     byte opcode = codeData[offset];
-
                     var instructionInfo = InstructionSet.GetInstruction(opcode);
 
                     if (!instructionInfo.IsValid)
@@ -280,12 +284,17 @@ namespace NESDecompiler.Core.Disassembly
         /// <summary>
         /// Traces execution from known entry points
         /// </summary>
-        private void TraceExecution()
+        private void TraceExecution(ushort? additionalTraceAddress = null)
         {
             try
             {
                 var toTrace = new Queue<ushort>(entryPoints);
                 var traced = new HashSet<ushort>();
+
+                if (additionalTraceAddress != null)
+                {
+                    toTrace.Enqueue(additionalTraceAddress.Value);
+                }
 
                 while (toTrace.Count > 0)
                 {
@@ -328,6 +337,7 @@ namespace NESDecompiler.Core.Disassembly
 
                             if (instruction.Info.Mnemonic == "JMP")
                             {
+                                
                                 continue;
                             }
                         }
@@ -448,6 +458,26 @@ namespace NESDecompiler.Core.Disassembly
                     instruction.TargetAddress = target;
                 }
             }
+        }
+
+        private void EnsureReferencedAddressesAreDisassembled()
+        {
+            const int baseAddress = 0x8000;
+            var unknownReferencedAddresses = referencedAddresses
+                .Where(x => !addressToInstruction.ContainsKey(x))
+                .Where(x => x > baseAddress)
+                .ToArray();
+
+            foreach (var referencedAddress in unknownReferencedAddresses)
+            {
+                var offset = referencedAddress - baseAddress;
+                LinearDisassembly(offset);
+                TraceExecution(referencedAddress);
+            }
+
+            // Update functions and labels
+            IdentifyFunctions();
+            GenerateLabels();
         }
 
         /// <summary>
