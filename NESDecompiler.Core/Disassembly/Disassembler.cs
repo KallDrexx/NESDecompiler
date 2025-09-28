@@ -463,21 +463,29 @@ namespace NESDecompiler.Core.Disassembly
         private void EnsureReferencedAddressesAreDisassembled()
         {
             const int baseAddress = 0x8000;
-            var unknownReferencedAddresses = referencedAddresses
-                .Where(x => !addressToInstruction.ContainsKey(x))
-                .Where(x => x > baseAddress)
-                .ToArray();
 
-            foreach (var referencedAddress in unknownReferencedAddresses)
+            // Keep tracing until we no longer have unknown referenced addresses. Using a for loop
+            // to ensure we don't get stuck in an infinite loop (can probably happen if one instruction
+            // attempts to jump to an unknown instruction I think).
+            for (var count = 0; count < 100; count++)
             {
-                var offset = referencedAddress - baseAddress;
-                LinearDisassembly(offset);
-                TraceExecution(referencedAddress);
+                var unknownReferencedAddresses = referencedAddresses
+                    .Where(x => !addressToInstruction.ContainsKey(x))
+                    .Where(x => x > baseAddress)
+                    .ToArray();
+
+                foreach (var referencedAddress in unknownReferencedAddresses)
+                {
+                    var offset = referencedAddress - baseAddress;
+                    LinearDisassembly(offset);
+                    TraceExecution(referencedAddress);
+                }
+
+                // Update functions and labels
+                IdentifyFunctions();
+                GenerateLabels();
             }
 
-            // Update functions and labels
-            IdentifyFunctions();
-            GenerateLabels();
         }
 
         /// <summary>
