@@ -592,6 +592,7 @@ namespace NESDecompiler.Core.Decompilation
 
                     if (!disassembler.AddressToInstruction.TryGetValue(address, out var instruction))
                     {
+                        Console.WriteLine($"Decompilation warning: Instruction {address} (0x{address:X4}) queued to be analyzed but does not exist");
                         continue;
                     }
 
