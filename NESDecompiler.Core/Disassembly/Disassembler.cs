@@ -230,7 +230,8 @@ namespace NESDecompiler.Core.Disassembly
         {
             try
             {
-                ushort baseAddress = 0x8000;
+                // ushort baseAddress = 0x8000;
+                ushort baseAddress = (ushort)(0x10000 - romInfo.PRGROMSize);
 
                 while (offset < codeData.Length)
                 {
