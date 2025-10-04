@@ -194,7 +194,8 @@ namespace NESDecompiler.Core.Disassembly
 
         public void AddEntyPoint(ushort address)
         {
-            if (address >= 0x8000)
+            const int baseAddress = 0x8000;
+            if (address >= baseAddress)
             {
                 entryPoints.Add(address);
             }
@@ -230,7 +231,6 @@ namespace NESDecompiler.Core.Disassembly
         {
             try
             {
-                // ushort baseAddress = 0x8000;
                 ushort baseAddress = (ushort)(0x10000 - romInfo.PRGROMSize);
 
                 while (offset < codeData.Length)
@@ -463,7 +463,7 @@ namespace NESDecompiler.Core.Disassembly
 
         private void EnsureReferencedAddressesAreDisassembled()
         {
-            const int baseAddress = 0x8000;
+            ushort baseAddress = (ushort)(0x10000 - romInfo.PRGROMSize);
 
             // Keep tracing until we no longer have unknown referenced addresses. Using a for loop
             // to ensure we don't get stuck in an infinite loop (can probably happen if one instruction
