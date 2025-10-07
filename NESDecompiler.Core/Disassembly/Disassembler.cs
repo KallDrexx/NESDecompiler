@@ -129,7 +129,7 @@ namespace NESDecompiler.Core.Disassembly
     public class Disassembler
     {
         private readonly int _baseAddress;
-        private Memory<byte> codeData;
+        private ReadOnlyMemory<byte> codeData;
         private List<DisassembledInstruction> instructions;
         private Dictionary<ushort, DisassembledInstruction> addressToInstruction;
         private HashSet<ushort> entryPoints;
@@ -183,7 +183,7 @@ namespace NESDecompiler.Core.Disassembly
         /// <summary>
         /// Creates a new disassembler for the specified ROM
         /// </summary>
-        public Disassembler(int baseAddress, Memory<byte> codeData)
+        public Disassembler(int baseAddress, ReadOnlyMemory<byte> codeData)
         {
             _baseAddress = baseAddress;
             this.codeData = codeData;
