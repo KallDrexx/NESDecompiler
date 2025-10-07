@@ -129,7 +129,7 @@ namespace NESDecompiler.Core.Disassembly
     public class Disassembler
     {
         private readonly int _baseAddress;
-        private byte[] codeData;
+        private Memory<byte> codeData;
         private List<DisassembledInstruction> instructions;
         private Dictionary<ushort, DisassembledInstruction> addressToInstruction;
         private HashSet<ushort> entryPoints;
@@ -183,10 +183,10 @@ namespace NESDecompiler.Core.Disassembly
         /// <summary>
         /// Creates a new disassembler for the specified ROM
         /// </summary>
-        public Disassembler(int baseAddress, byte[] codeData)
+        public Disassembler(int baseAddress, Memory<byte> codeData)
         {
             _baseAddress = baseAddress;
-            this.codeData = codeData ?? throw new ArgumentNullException(nameof(codeData));
+            this.codeData = codeData;
 
             instructions = new List<DisassembledInstruction>();
             addressToInstruction = new Dictionary<ushort, DisassembledInstruction>();
@@ -244,7 +244,7 @@ namespace NESDecompiler.Core.Disassembly
                         break;
                     }
 
-                    byte opcode = codeData[offset];
+                    byte opcode = codeData.Span[offset];
                     var instructionInfo = InstructionSet.GetInstruction(opcode);
 
                     if (!instructionInfo.IsValid)
@@ -260,7 +260,7 @@ namespace NESDecompiler.Core.Disassembly
                     }
 
                     byte[] bytes = new byte[instructionInfo.Size];
-                    Array.Copy(codeData, offset, bytes, 0, instructionInfo.Size);
+                    codeData.Slice(offset, instructionInfo.Size).CopyTo(bytes.AsMemory());
 
                     var instruction = new DisassembledInstruction
                     {
