@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Text;
 using NESDecompiler.Core.CPU;
 using NESDecompiler.Core.Exceptions;
 using NESDecompiler.Core.ROM;
@@ -130,7 +128,7 @@ namespace NESDecompiler.Core.Disassembly
     /// </summary>
     public class Disassembler
     {
-        private ROMInfo romInfo;
+        private readonly int _baseAddress;
         private byte[] codeData;
         private List<DisassembledInstruction> instructions;
         private Dictionary<ushort, DisassembledInstruction> addressToInstruction;
@@ -169,18 +167,8 @@ namespace NESDecompiler.Core.Disassembly
         /// </summary>
         /// <param name="romInfo">Information about the ROM</param>
         /// <param name="codeData">The code data to disassemble</param>
-        public Disassembler(ROMInfo romInfo, byte[] codeData)
+        public Disassembler(ROMInfo romInfo, byte[] codeData) : this((ushort)(0x10000 - romInfo.PRGROMSize), codeData)
         {
-            this.romInfo = romInfo ?? throw new ArgumentNullException(nameof(romInfo));
-            this.codeData = codeData ?? throw new ArgumentNullException(nameof(codeData));
-
-            instructions = new List<DisassembledInstruction>();
-            addressToInstruction = new Dictionary<ushort, DisassembledInstruction>();
-            entryPoints = new HashSet<ushort>();
-            referencedAddresses = new HashSet<ushort>();
-            labels = new Dictionary<ushort, string>();
-            labelCounter = 0;
-
             if (romInfo.ResetVector != 0)
             {
                 entryPoints.Add(romInfo.ResetVector);
@@ -192,10 +180,25 @@ namespace NESDecompiler.Core.Disassembly
             }
         }
 
+        /// <summary>
+        /// Creates a new disassembler for the specified ROM
+        /// </summary>
+        public Disassembler(int baseAddress, byte[] codeData)
+        {
+            _baseAddress = baseAddress;
+            this.codeData = codeData ?? throw new ArgumentNullException(nameof(codeData));
+
+            instructions = new List<DisassembledInstruction>();
+            addressToInstruction = new Dictionary<ushort, DisassembledInstruction>();
+            entryPoints = new HashSet<ushort>();
+            referencedAddresses = new HashSet<ushort>();
+            labels = new Dictionary<ushort, string>();
+            labelCounter = 0;
+        }
+
         public void AddEntyPoint(ushort address)
         {
-            const int baseAddress = 0x8000;
-            if (address >= baseAddress)
+            if (address >= _baseAddress)
             {
                 entryPoints.Add(address);
             }
@@ -231,11 +234,9 @@ namespace NESDecompiler.Core.Disassembly
         {
             try
             {
-                ushort baseAddress = (ushort)(0x10000 - romInfo.PRGROMSize);
-
                 while (offset < codeData.Length)
                 {
-                    ushort cpuAddress = (ushort)(baseAddress + offset);
+                    ushort cpuAddress = (ushort)(_baseAddress + offset);
                     if (addressToInstruction.ContainsKey(cpuAddress))
                     {
                         // We have already disassembled this instruction and progressed from here,
@@ -463,8 +464,6 @@ namespace NESDecompiler.Core.Disassembly
 
         private void EnsureReferencedAddressesAreDisassembled()
         {
-            ushort baseAddress = (ushort)(0x10000 - romInfo.PRGROMSize);
-
             // Keep tracing until we no longer have unknown referenced addresses. Using a for loop
             // to ensure we don't get stuck in an infinite loop (can probably happen if one instruction
             // attempts to jump to an unknown instruction I think).
@@ -472,12 +471,12 @@ namespace NESDecompiler.Core.Disassembly
             {
                 var unknownReferencedAddresses = referencedAddresses
                     .Where(x => !addressToInstruction.ContainsKey(x))
-                    .Where(x => x > baseAddress)
+                    .Where(x => x > _baseAddress)
                     .ToArray();
 
                 foreach (var referencedAddress in unknownReferencedAddresses)
                 {
-                    var offset = referencedAddress - baseAddress;
+                    var offset = referencedAddress - _baseAddress;
                     LinearDisassembly(offset);
                     TraceExecution(referencedAddress);
                 }
@@ -487,25 +486,6 @@ namespace NESDecompiler.Core.Disassembly
                 GenerateLabels();
             }
 
-        }
-
-        /// <summary>
-        /// Returns the disassembly as a formatted string
-        /// </summary>
-        public string ToAssemblyString()
-        {
-            var sb = new StringBuilder();
-
-            sb.AppendLine("; 6502 Disassembly");
-            sb.AppendLine($"; ROM: {romInfo}");
-            sb.AppendLine();
-
-            foreach (var instruction in instructions)
-            {
-                sb.AppendLine(instruction.ToString());
-            }
-
-            return sb.ToString();
         }
     }
 }
