@@ -97,15 +97,10 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
         
-    - name: Restore dependencies
-      run: dotnet restore --runtime linux-${{ matrix.arch }}
-      
-    - name: Build Core
+    - name: Restore dependencies (CLI only)
       run: |
-        dotnet build NESDecompiler.Core/NESDecompiler.Core.csproj \
-          --configuration Release \
-          --runtime linux-${{ matrix.arch }} \
-          --no-restore
+        dotnet restore NESDecompiler.Core/NESDecompiler.Core.csproj
+        dotnet restore NESDecompiler.CLI/NESDecompiler.CLI.csproj
           
     - name: Build CLI
       run: |
@@ -162,15 +157,10 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
         
-    - name: Restore dependencies
-      run: dotnet restore --runtime osx-${{ matrix.arch }}
-      
-    - name: Build Core
+    - name: Restore dependencies (CLI only)
       run: |
-        dotnet build NESDecompiler.Core/NESDecompiler.Core.csproj \
-          --configuration Release \
-          --runtime osx-${{ matrix.arch }} \
-          --no-restore
+        dotnet restore NESDecompiler.Core/NESDecompiler.Core.csproj
+        dotnet restore NESDecompiler.CLI/NESDecompiler.CLI.csproj
           
     - name: Build CLI
       run: |
