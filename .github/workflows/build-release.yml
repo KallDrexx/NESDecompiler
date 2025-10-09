@@ -1,0 +1,308 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ main, master, develop ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  PROJECT_NAME: 'NESDecompiler'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        arch: [x64, x86, arm64]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build Core
+      run: |
+        dotnet build NESDecompiler.Core/NESDecompiler.Core.csproj `
+          --configuration Release `
+          --runtime win-${{ matrix.arch }} `
+          --no-restore
+          
+    - name: Build CLI
+      run: |
+        dotnet publish NESDecompiler.CLI/NESDecompiler.CLI.csproj `
+          --configuration Release `
+          --runtime win-${{ matrix.arch }} `
+          --self-contained true `
+          --output ./artifacts/cli/win-${{ matrix.arch }} `
+          -p:PublishSingleFile=true `
+          -p:PublishTrimmed=true
+          
+    - name: Build GUI
+      run: |
+        dotnet publish NESDecompiler.GUI/NESDecompiler.GUI.csproj `
+          --configuration Release `
+          --runtime win-${{ matrix.arch }} `
+          --self-contained true `
+          --output ./artifacts/gui/win-${{ matrix.arch }} `
+          -p:PublishSingleFile=true `
+          -p:PublishTrimmed=false
+          
+    - name: Package Windows Release
+      run: |
+        $version = if ($env:GITHUB_REF -match 'refs/tags/v(.*)') { $matches[1] } else { (Get-Date -Format "yyyy.MM.dd") + "-" + $env:GITHUB_SHA.Substring(0,7) }
+        
+        # Package CLI
+        Compress-Archive -Path ./artifacts/cli/win-${{ matrix.arch }}/* `
+          -DestinationPath ./NESDecompiler-CLI-win-${{ matrix.arch }}-$version.zip
+          
+        # Package GUI
+        Compress-Archive -Path ./artifacts/gui/win-${{ matrix.arch }}/* `
+          -DestinationPath ./NESDecompiler-GUI-win-${{ matrix.arch }}-$version.zip
+          
+        # Package Full (CLI + GUI)
+        New-Item -ItemType Directory -Path ./artifacts/full/win-${{ matrix.arch }} -Force
+        Copy-Item -Path ./artifacts/cli/win-${{ matrix.arch }}/* -Destination ./artifacts/full/win-${{ matrix.arch }} -Recurse
+        Copy-Item -Path ./artifacts/gui/win-${{ matrix.arch }}/* -Destination ./artifacts/full/win-${{ matrix.arch }} -Recurse
+        Copy-Item -Path ./README.md -Destination ./artifacts/full/win-${{ matrix.arch }}
+        Copy-Item -Path ./LICENSE -Destination ./artifacts/full/win-${{ matrix.arch }}
+        
+        Compress-Archive -Path ./artifacts/full/win-${{ matrix.arch }}/* `
+          -DestinationPath ./NESDecompiler-Full-win-${{ matrix.arch }}-$version.zip
+      shell: pwsh
+      
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-${{ matrix.arch }}
+        path: |
+          NESDecompiler-*.zip
+        retention-days: 7
+
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [x64, arm64]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build Core
+      run: |
+        dotnet build NESDecompiler.Core/NESDecompiler.Core.csproj \
+          --configuration Release \
+          --runtime linux-${{ matrix.arch }} \
+          --no-restore
+          
+    - name: Build CLI
+      run: |
+        dotnet publish NESDecompiler.CLI/NESDecompiler.CLI.csproj \
+          --configuration Release \
+          --runtime linux-${{ matrix.arch }} \
+          --self-contained true \
+          --output ./artifacts/cli/linux-${{ matrix.arch }} \
+          -p:PublishSingleFile=true \
+          -p:PublishTrimmed=true
+          
+    - name: Set execute permissions
+      run: chmod +x ./artifacts/cli/linux-${{ matrix.arch }}/NESDecompiler.CLI
+      
+    - name: Package Linux Release
+      run: |
+        if [[ $GITHUB_REF == refs/tags/v* ]]; then
+          version=${GITHUB_REF#refs/tags/v}
+        else
+          version=$(date +%Y.%m.%d)-${GITHUB_SHA:0:7}
+        fi
+        
+        # Create release directory
+        mkdir -p ./artifacts/release/linux-${{ matrix.arch }}
+        cp -r ./artifacts/cli/linux-${{ matrix.arch }}/* ./artifacts/release/linux-${{ matrix.arch }}/
+        cp README.md ./artifacts/release/linux-${{ matrix.arch }}/
+        cp LICENSE ./artifacts/release/linux-${{ matrix.arch }}/
+        
+        # Create tar.gz
+        cd ./artifacts/release
+        tar -czf ../../NESDecompiler-CLI-linux-${{ matrix.arch }}-${version}.tar.gz linux-${{ matrix.arch }}
+      shell: bash
+      
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-${{ matrix.arch }}
+        path: |
+          NESDecompiler-*.tar.gz
+        retention-days: 7
+
+  build-macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        arch: [x64, arm64]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build Core
+      run: |
+        dotnet build NESDecompiler.Core/NESDecompiler.Core.csproj \
+          --configuration Release \
+          --runtime osx-${{ matrix.arch }} \
+          --no-restore
+          
+    - name: Build CLI
+      run: |
+        dotnet publish NESDecompiler.CLI/NESDecompiler.CLI.csproj \
+          --configuration Release \
+          --runtime osx-${{ matrix.arch }} \
+          --self-contained true \
+          --output ./artifacts/cli/osx-${{ matrix.arch }} \
+          -p:PublishSingleFile=true \
+          -p:PublishTrimmed=true
+          
+    - name: Set execute permissions
+      run: chmod +x ./artifacts/cli/osx-${{ matrix.arch }}/NESDecompiler.CLI
+      
+    - name: Package macOS Release
+      run: |
+        if [[ $GITHUB_REF == refs/tags/v* ]]; then
+          version=${GITHUB_REF#refs/tags/v}
+        else
+          version=$(date +%Y.%m.%d)-${GITHUB_SHA:0:7}
+        fi
+        
+        # Create release directory
+        mkdir -p ./artifacts/release/osx-${{ matrix.arch }}
+        cp -r ./artifacts/cli/osx-${{ matrix.arch }}/* ./artifacts/release/osx-${{ matrix.arch }}/
+        cp README.md ./artifacts/release/osx-${{ matrix.arch }}/
+        cp LICENSE ./artifacts/release/osx-${{ matrix.arch }}/
+        
+        # Create tar.gz
+        cd ./artifacts/release
+        tar -czf ../../NESDecompiler-CLI-osx-${{ matrix.arch }}-${version}.tar.gz osx-${{ matrix.arch }}
+      shell: bash
+      
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-${{ matrix.arch }}
+        path: |
+          NESDecompiler-*.tar.gz
+        retention-days: 7
+
+  create-release:
+    needs: [build-windows, build-linux, build-macos]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./artifacts
+        
+    - name: Display structure of downloaded files
+      run: ls -R ./artifacts
+      
+    - name: Extract version from tag
+      id: get_version
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/v}
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "Version: $VERSION"
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: NES Decompiler v${{ steps.get_version.outputs.VERSION }}
+        body: |
+          # NES Decompiler v${{ steps.get_version.outputs.VERSION }}
+          
+          ## Downloads
+          
+          ### Windows (GUI + CLI)
+          - **x64**: Full GUI and CLI support
+          - **x86**: Full GUI and CLI support (32-bit)
+          - **ARM64**: Full GUI and CLI support (Windows on ARM)
+          
+          ### Linux (CLI only)
+          - **x64**: Command-line interface
+          - **ARM64**: Command-line interface
+          
+          ### macOS (CLI only)
+          - **x64**: Command-line interface (Intel Macs)
+          - **ARM64**: Command-line interface (Apple Silicon)
+          
+          ## Installation
+          
+          1. Download the appropriate package for your platform
+          2. Extract the archive
+          3. Run the executable (Windows: `NESDecompiler.GUI.exe` or `NESDecompiler.CLI.exe`, Linux/macOS: `./NESDecompiler.CLI`)
+          
+          ## Notes
+          
+          - Windows packages include both GUI and CLI versions
+          - Linux and macOS packages include CLI only
+          - All packages are self-contained and don't require .NET runtime installation
+          
+          ## Changelog
+          
+          See [CHANGELOG.md](CHANGELOG.md) for details.
+        files: |
+          ./artifacts/**/*.zip
+          ./artifacts/**/*.tar.gz
+        draft: false
+        prerelease: false
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+  build-summary:
+    needs: [build-windows, build-linux, build-macos]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Build Summary
+      run: |
+        echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Platform | Architecture | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|----------|--------------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Windows  | x64          | ${{ needs.build-windows.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Windows  | x86          | ${{ needs.build-windows.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Windows  | ARM64        | ${{ needs.build-windows.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Linux    | x64          | ${{ needs.build-linux.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Linux    | ARM64        | ${{ needs.build-linux.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| macOS    | x64          | ${{ needs.build-macos.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| macOS    | ARM64        | ${{ needs.build-macos.result }} |" >> $GITHUB_STEP_SUMMARY
