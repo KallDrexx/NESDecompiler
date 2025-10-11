@@ -37,8 +37,13 @@ public class DecompiledFunction
         // We need to order the instructions so that the starting instruction is the first one encountered.
         // We can't just rely on the CPU address, because a function may jump to a code point earlier than
         // the first instruction.
-        var initialInstructions = instructions.Where(x => x.CPUAddress >= address);
-        var trailingInstructions = instructions.Where(x => x.CPUAddress < address);
+        var initialInstructions = instructions
+            .Where(x => x.CPUAddress >= address)
+            .OrderBy(x => x.CPUAddress);
+
+        var trailingInstructions = instructions
+            .Where(x => x.CPUAddress < address)
+            .OrderBy(x => x.CPUAddress);
 
         OrderedInstructions = initialInstructions.Concat(trailingInstructions).ToArray();
     }
