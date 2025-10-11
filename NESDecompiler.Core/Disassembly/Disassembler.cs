@@ -439,7 +439,7 @@ namespace NESDecompiler.Core.Disassembly
         /// Calculates the target address for branch and jump instructions
         /// </summary>
         /// <param name="instruction">The instruction to process</param>
-        private void CalculateTargetAddress(DisassembledInstruction instruction)
+        public static void CalculateTargetAddress(DisassembledInstruction instruction)
         {
             if (instruction.Info.AddressingMode == AddressingMode.Relative)
             {
