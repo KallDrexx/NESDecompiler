@@ -35,12 +35,21 @@ public static class FunctionDecompiler
             if (instruction.TargetAddress != null)
             {
                 jumpAddresses.Add(instruction.TargetAddress.Value);
-                addressQueue.Enqueue(instruction.CPUAddress);
+                addressQueue.Enqueue(instruction.TargetAddress.Value);
             }
 
             if (!instruction.IsJump)
             {
                 addressQueue.Enqueue((ushort)(nextAddress + instruction.Info.Size));
+            }
+        }
+
+        // Add labels for any jump targets
+        foreach (var instruction in instructions)
+        {
+            if (jumpAddresses.Contains(instruction.CPUAddress))
+            {
+                instruction.Label = $"loc_{instruction.CPUAddress:X4}";
             }
         }
 
