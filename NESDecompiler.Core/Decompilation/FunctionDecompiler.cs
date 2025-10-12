@@ -21,11 +21,46 @@ public static class FunctionDecompiler
         {
             if (!seenInstructions.Add(nextAddress))
             {
+                if (nextAddress == functionAddress)
+                {
+                    // This means a branch occurred that caused the flow to wrap around to instructions preceding
+                    // the function entrance. This usually happens when there is a jump/branch to right before the
+                    // entrypoint, usually due to decompiling in the middle of a loop. To fix this, we need to add
+                    // a jump back to the function entrypoint
+                    if (functionAddress == 0x00 || seenInstructions.Contains((ushort)(functionAddress - 1)))
+                    {
+                        var message = $"Function 0x{functionAddress:X4} wraps around, but there's not enough " +
+                                      $"space to add a jump back to the entrypoint";
+
+                        throw new InvalidOperationException(message);
+                    }
+
+                    var addressHigh = (functionAddress & 0xFF00) >> 8;
+                    var addressLow = functionAddress & 0x00FF;
+
+                    var jumpInstruction = new DisassembledInstruction
+                    {
+                        Info = InstructionSet.GetInstruction(0x4C),
+                        CPUAddress = (ushort)(nextAddress - 1),
+                        Bytes = [0x4C, (byte)addressLow, (byte)addressHigh],
+                        TargetAddress = functionAddress,
+                    };
+
+                    instructions.Add(jumpInstruction);
+                }
+
                 continue;
             }
 
             var instruction = GetNextInstruction(nextAddress, codeRegions);
             instructions.Add(instruction);
+
+            // Ensure the function entrypoint has a label
+            if (instruction.CPUAddress == functionAddress && instruction.Label == null)
+            {
+                instruction.Label = $"sub_{functionAddress:X4}";
+                jumpAddresses.Add(functionAddress);
+            }
 
             if (IsEndOfFunction(instruction))
             {
