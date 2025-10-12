@@ -39,11 +39,13 @@ public class DecompiledFunction
         // the first instruction.
         var initialInstructions = instructions
             .Where(x => x.CPUAddress >= address)
-            .OrderBy(x => x.CPUAddress);
+            .OrderBy(x => x.CPUAddress)
+            .ThenBy(x => x.SubAddressOrder);
 
         var trailingInstructions = instructions
             .Where(x => x.CPUAddress < address)
-            .OrderBy(x => x.CPUAddress);
+            .OrderBy(x => x.CPUAddress)
+            .ThenBy(x => x.SubAddressOrder); // real instructions before virtual ones
 
         OrderedInstructions = initialInstructions.Concat(trailingInstructions).ToArray();
     }

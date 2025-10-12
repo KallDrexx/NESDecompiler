@@ -27,10 +27,10 @@ public static class FunctionDecompiler
                     // the function entrance. This usually happens when there is a jump/branch to right before the
                     // entrypoint, usually due to decompiling in the middle of a loop. To fix this, we need to add
                     // a jump back to the function entrypoint
-                    if (functionAddress == 0x00 || seenInstructions.Contains((ushort)(functionAddress - 1)))
+                    if (functionAddress == 0x00)
                     {
-                        var message = $"Function 0x{functionAddress:X4} wraps around, but there's not enough " +
-                                      $"space to add a jump back to the entrypoint";
+                        const string message = "Wrap around instruction detected for a function at 0000, but that " +
+                                               "doesn't make sense";
 
                         throw new InvalidOperationException(message);
                     }
@@ -44,6 +44,9 @@ public static class FunctionDecompiler
                         CPUAddress = (ushort)(nextAddress - 1),
                         Bytes = [0x4C, (byte)addressLow, (byte)addressHigh],
                         TargetAddress = functionAddress,
+
+                        // Make sure they appear after any instruction that already occupies that address
+                        SubAddressOrder = 1,
                     };
 
                     instructions.Add(jumpInstruction);
@@ -109,9 +112,7 @@ public static class FunctionDecompiler
         var info = InstructionSet.GetInstruction(bytes[0]);
         if (!info.IsValid)
         {
-            var message = $"Attempted to get instruction at address 0x{address:X4}, but byte 0x{bytes[0]:X4} " +
-                          $"is not a valid/known opcode";
-
+            var message = $"Opcode 0x{bytes[0]:X2} at address 0x{address:X4} is not a known instruction";
             throw new InvalidOperationException(message);
         }
 

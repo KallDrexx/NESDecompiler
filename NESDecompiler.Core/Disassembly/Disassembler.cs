@@ -73,6 +73,14 @@ namespace NESDecompiler.Core.Disassembly
         public bool IsJump => Info.Mnemonic == "JMP" || Info.Mnemonic == "JSR";
 
         /// <summary>
+        /// Determines the order of this instruction within a single address space. This is mostly
+        /// needed in the cases that additional instructions are needed to be added in the same
+        /// address location at runtime. Can be used to add runtime hooks or to work around
+        /// decompilation issues. Should be 0 for all native instructions from a ROM.
+        /// </summary>
+        public byte SubAddressOrder { get; set; }
+
+        /// <summary>
         /// Returns a string representation of this instruction
         /// </summary>
         public override string ToString()
