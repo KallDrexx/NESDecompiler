@@ -78,7 +78,7 @@ namespace NESDecompiler.Core.Disassembly
         /// address location at runtime. Can be used to add runtime hooks or to work around
         /// decompilation issues. Should be 0 for all native instructions from a ROM.
         /// </summary>
-        public byte SubAddressOrder { get; set; }
+        public sbyte SubAddressOrder { get; set; }
 
         /// <summary>
         /// Returns a string representation of this instruction

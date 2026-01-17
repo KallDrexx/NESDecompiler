@@ -26,7 +26,7 @@ public static class FunctionDecompiler
                     // This means a branch occurred that caused the flow to wrap around to instructions preceding
                     // the function entrance. This usually happens when there is a jump/branch to right before the
                     // entrypoint, usually due to decompiling in the middle of a loop. To fix this, we need to add
-                    // a jump back to the function entrypoint
+                    // a jump back to the function entrypoint.
                     if (functionAddress == 0x00)
                     {
                         const string message = "Wrap around instruction detected for a function at 0000, but that " +
@@ -41,12 +41,12 @@ public static class FunctionDecompiler
                     var jumpInstruction = new DisassembledInstruction
                     {
                         Info = InstructionSet.GetInstruction(0x4C),
-                        CPUAddress = (ushort)(nextAddress - 1),
+                        CPUAddress = nextAddress,
                         Bytes = [0x4C, (byte)addressLow, (byte)addressHigh],
                         TargetAddress = functionAddress,
 
-                        // Make sure they appear after any instruction that already occupies that address
-                        SubAddressOrder = 1,
+                        // Make sure they appear before the function address
+                        SubAddressOrder = -1,
                     };
 
                     instructions.Add(jumpInstruction);
@@ -92,7 +92,8 @@ public static class FunctionDecompiler
         // Add labels for any jump targets
         foreach (var instruction in instructions)
         {
-            if (jumpAddresses.Contains(instruction.CPUAddress))
+            // Only real instructions should have a label, virtual ones should not
+            if (jumpAddresses.Contains(instruction.CPUAddress) && instruction.SubAddressOrder == 0)
             {
                 instruction.Label = $"loc_{instruction.CPUAddress:X4}";
             }
