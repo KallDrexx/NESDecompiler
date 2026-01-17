@@ -32,13 +32,17 @@ public class DecompiledFunction
         JumpTargets = instructions
             .Where(x => jumpTargets.Contains(x.CPUAddress))
             .Where(x => x.Label != null)
+            .Where(x => x.SubAddressOrder == 0) // only real instructions should be jumped to
             .ToDictionary(x => x.CPUAddress, x => x.Label!);
 
         // We need to order the instructions so that the starting instruction is the first one encountered.
         // We can't just rely on the CPU address, because a function may jump to a code point earlier than
         // the first instruction.
+        var entryPointInstructions = instructions.Where(x => x.CPUAddress == address)
+            .Where(x => x.SubAddressOrder >= 0);
+
         var initialInstructions = instructions
-            .Where(x => x.CPUAddress >= address)
+            .Where(x => x.CPUAddress > address)
             .OrderBy(x => x.CPUAddress)
             .ThenBy(x => x.SubAddressOrder);
 
@@ -47,6 +51,17 @@ public class DecompiledFunction
             .OrderBy(x => x.CPUAddress)
             .ThenBy(x => x.SubAddressOrder); // real instructions before virtual ones
 
-        OrderedInstructions = initialInstructions.Concat(trailingInstructions).ToArray();
+        // If there was a loopback jump point at the function address, put that here. This is required
+        // because if an emulator is executing a virtual loopback instruction and an IRQ occurs, this
+        // will cause the virtual instruction to be saved to the stack, and that can cause the entry
+        // point to be wrong.
+        var loopbackInstructions = instructions.Where(x => x.CPUAddress == address)
+            .Where(x => x.SubAddressOrder < 0);
+
+        OrderedInstructions = entryPointInstructions
+            .Concat(initialInstructions)
+            .Concat(trailingInstructions)
+            .Concat(loopbackInstructions)
+            .ToArray();
     }
 }
