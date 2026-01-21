@@ -23,6 +23,12 @@ public class DecompiledFunction
     /// </summary>
     public IReadOnlyDictionary<ushort, string> JumpTargets { get; }
 
+    /// <summary>
+    /// Indicates that this function is expected to mutate instruction bytes at runtime and should
+    /// avoid JIT compilation.
+    /// </summary>
+    public bool IsSelfModifying { get; set; }
+
     public DecompiledFunction(
         ushort address,
         IReadOnlyList<DisassembledInstruction> instructions,
